@@ -15,6 +15,7 @@ import random
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.99 Safari/537.36'
 APPKEY = '85eb6835b0a1034e'
 APPSEC = '2ad42749773c441109bdc0191257a664'
+APPKEY2 = '95acd7f6cc3392f3'
 
 def GetBilibiliUrl(url):
     overseas=False
@@ -29,7 +30,9 @@ def GetBilibiliUrl(url):
     resp_cid = urlfetch('http://api.bilibili.com/view?'+GetSign(cid_args,APPKEY,APPSEC))
     resp_cid = dict(json.loads(resp_cid.decode('utf-8', 'replace')))
     cid = resp_cid.get('cid')
-    media_args = {'otype': 'json', 'cid': cid, 'type': 'flv', 'quality': 4, 'appkey': APPKEY}
+    AppkeyChoices = [APPKEY, APPKEY2]
+    APPKEYF = random.choice(AppkeyChoices)
+    media_args = {'otype': 'json', 'cid': cid, 'type': 'flv', 'quality': 4, 'appkey': APPKEYF}
     resp_media = urlfetch(url_get_media+ChangeFuck(media_args))
     resp_media = dict(json.loads(resp_media.decode('utf-8', 'replace')))
     result = resp_media.get('result')
