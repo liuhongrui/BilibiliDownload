@@ -17,6 +17,13 @@ APPKEY = '85eb6835b0a1034e'
 APPSEC = '2ad42749773c441109bdc0191257a664'
 APPKEY2 = '95acd7f6cc3392f3'
 
+def read_cookie():
+    cookiepath = './bilicookies'
+    cookies_file = open(cookiepath, 'r')
+    cookies = cookies_file.readlines()
+    cookies_file.close()
+    return cookies
+
 def GetBilibiliUrl(url):
     overseas=False
     url_get_media = 'http://interface.bilibili.com/playurl?' if not overseas else 'http://interface.bilibili.com/v_cdn_play?'
@@ -74,7 +81,7 @@ def urlfetch(url):
         ip = '220.181.111.' + str(ip)
     else:
         ip = '59.152.193.' + str(ip)
-    req_headers = {'Accept-Encoding': 'gzip, deflate', 'User-Agent': USER_AGENT, 'Client-IP': ip, 'X-Forwarded-For': ip, 'Cookie': 'DedeUserID=8926815; DedeUserID__ckMd5=7a15e38c8988dd51; SESSDATA=f3723f8c%2C1446648608%2Cf11d87e3;'}
+    req_headers = {'Accept-Encoding': 'gzip, deflate', 'User-Agent': USER_AGENT, 'Client-IP': ip, 'X-Forwarded-For': ip, 'Cookie': read_cookie()[0]}
     req = urllib.request.Request(url=url, headers=req_headers)
     response = urllib.request.urlopen(req, timeout=120)
     content_encoding = response.info().get('Content-Encoding')
