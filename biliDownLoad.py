@@ -11,11 +11,13 @@ import urllib.request
 import xml.dom.minidom
 import zlib
 import random
+import redis
 
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.99 Safari/537.36'
 APPKEY = '85eb6835b0a1034e'
 APPSEC = '2ad42749773c441109bdc0191257a664'
 APPKEY2 = '95acd7f6cc3392f3'
+r = redis.Redis(host='xxx', port=xxx, db=0, password='xxx')
 
 def read_cookie():
     cookiepath = './bilicookies'
@@ -37,17 +39,22 @@ def GetBilibiliUrl(url):
     resp_cid = urlfetch('http://api.bilibili.com/view?'+GetSign(cid_args,APPKEY,APPSEC))
     resp_cid = dict(json.loads(resp_cid.decode('utf-8', 'replace')))
     cid = resp_cid.get('cid')
-    AppkeyChoices = [APPKEY, APPKEY2]
-    APPKEYF = random.choice(AppkeyChoices)
+    if cid == None:
+    	if r.exists(aid+','+pid):
+    		return r.get(aid+','+pid).decode('utf-8', 'replace')
+    	else:
+    		return 'error'
+    APPKEYF = random.choice([APPKEY, APPKEY2])
     media_args = {'otype': 'json', 'cid': cid, 'type': 'flv', 'quality': 4, 'appkey': APPKEYF}
     resp_media = urlfetch(url_get_media+ChangeFuck(media_args))
     resp_media = dict(json.loads(resp_media.decode('utf-8', 'replace')))
     result = resp_media.get('result')
-    if (result is 'error'):
+    if result == 'error':
         return 'error'
     media_urls = resp_media.get('durl')
     media_urls = media_urls[0]
     media_urls = media_urls.get('url')
+    r.set(aid+','+pid, media_urls)
     return media_urls
     
 def GetSign(params,appkey,AppSecret=None):
