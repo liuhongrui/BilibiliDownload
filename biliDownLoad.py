@@ -50,7 +50,10 @@ def GetBilibiliUrl(url):
     resp_media = dict(json.loads(resp_media.decode('utf-8', 'replace')))
     result = resp_media.get('result')
     if result == 'error':
-        return 'error'
+    	if r.exists(aid+','+pid):
+    		return r.get(aid+','+pid).decode('utf-8', 'replace')
+    	else:
+    		return 'error'
     media_urls = resp_media.get('durl')
     media_urls = media_urls[0]
     media_urls = media_urls.get('url')
