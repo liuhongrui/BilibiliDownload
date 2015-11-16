@@ -20,93 +20,95 @@ APPKEY2 = '95acd7f6cc3392f3'
 r = redis.Redis(host='xxx', port=xxx, db=0, password='xxx')
 
 def read_cookie():
-    cookiepath = './bilicookies'
-    cookies_file = open(cookiepath, 'r')
-    cookies = cookies_file.readlines()
-    cookies_file.close()
-    return cookies
+	cookiepath = './bilicookies'
+	cookies_file = open(cookiepath, 'r')
+	cookies = cookies_file.readlines()
+	cookies_file.close()
+	return cookies
 
-def GetBilibiliUrl(url):
-    overseas=False
-    url_get_media = 'http://interface.bilibili.com/playurl?' if not overseas else 'http://interface.bilibili.com/v_cdn_play?'
-    regex_match = re.findall('http:/*[^/]+/video/av(\\d+)(/|/index.html|/index_(\\d+).html)?(\\?|#|$)',url)
-    if not regex_match:
-        return 'error2'
-    aid = regex_match[0][0]
-    pid = regex_match[0][2] or '1'
-    cid_args = {'type': 'json', 'id': aid, 'page': pid}
+def GetBilibiliUrl(aid, pid):
+	cid_args = {'type': 'json', 'id': aid, 'page': pid}
+	resp_cid = urlfetch('http://api.bilibili.com/view?'+GetSign(cid_args,APPKEY,APPSEC))
+	resp_cid = dict(json.loads(resp_cid.decode('utf-8', 'replace')))
+	cid = resp_cid.get('cid')
+	APPKEYF = random.choice([APPKEY, APPKEY2])
+	media_args = {'otype': 'json', 'cid': cid, 'type': 'flv', 'quality': 4, 'appkey': APPKEYF}
+	resp_media = urlfetch(url_get_media+ChangeFuck(media_args))
+	resp_media = dict(json.loads(resp_media.decode('utf-8', 'replace')))
+	result = resp_media.get('result')
+	if result == 'error':
+		if r.exists(aid+','+pid):
+			return r.get(aid+','+pid).decode('utf-8', 'replace')
+		else:
+			return 'error'
+	media_urls = resp_media.get('durl')
+	media_urls = media_urls[0]
+	media_urls = media_urls.get('url')
+	r.set(aid+','+pid, media_urls)
+	return media_urls
 
-    resp_cid = urlfetch('http://api.bilibili.com/view?'+GetSign(cid_args,APPKEY,APPSEC))
-    resp_cid = dict(json.loads(resp_cid.decode('utf-8', 'replace')))
-    cid = resp_cid.get('cid')
-    if cid == None:
-    	if r.exists(aid+','+pid):
-    		return r.get(aid+','+pid).decode('utf-8', 'replace')
-    	else:
-    		return 'error'
-    APPKEYF = random.choice([APPKEY, APPKEY2])
-    media_args = {'otype': 'json', 'cid': cid, 'type': 'flv', 'quality': 4, 'appkey': APPKEYF}
-    resp_media = urlfetch(url_get_media+ChangeFuck(media_args))
-    resp_media = dict(json.loads(resp_media.decode('utf-8', 'replace')))
-    result = resp_media.get('result')
-    if result == 'error':
-    	if r.exists(aid+','+pid):
-    		return r.get(aid+','+pid).decode('utf-8', 'replace')
-    	else:
-    		return 'error'
-    media_urls = resp_media.get('durl')
-    media_urls = media_urls[0]
-    media_urls = media_urls.get('url')
-    r.set(aid+','+pid, media_urls)
-    return media_urls
-    
 def GetSign(params,appkey,AppSecret=None):
-    params['appkey']=appkey;
-    data = "";
-    paras = sorted(params)
-    paras.sort();
-    for para in paras:
-        if data != "":
-            data += "&";
-        data += para + "=" + str(params[para]);
-    if AppSecret == None:
-        return data
-    m = hashlib.md5()
-    m.update((data+AppSecret).encode('utf-8'))
-    return data+'&sign='+m.hexdigest()
+	params['appkey']=appkey;
+	data = "";
+	paras = sorted(params)
+	paras.sort();
+	for para in paras:
+		if data != "":
+			data += "&";
+		data += para + "=" + str(params[para]);
+	if AppSecret == None:
+		return data
+	m = hashlib.md5()
+	m.update((data+AppSecret).encode('utf-8'))
+	return data+'&sign='+m.hexdigest()
 
 def ChangeFuck(params):
-    data = "";
-    paras = params;
-    for para in paras:
-        if data != "":
-            data += "&";
-        data += para + "=" + str(params[para]);
-    return data
-    
+	data = "";
+	paras = params;
+	for para in paras:
+		if data != "":
+			data += "&";
+		data += para + "=" + str(params[para]);
+	return data
+
 def urlfetch(url):
-    ip = random.randint(1,255)
-    select = random.randint(1,2)
-    if select == 1:
-        ip = '220.181.111.' + str(ip)
-    else:
-        ip = '59.152.193.' + str(ip)
-    req_headers = {'Accept-Encoding': 'gzip, deflate', 'User-Agent': USER_AGENT, 'Client-IP': ip, 'X-Forwarded-For': ip, 'Cookie': read_cookie()[0]}
-    req = urllib.request.Request(url=url, headers=req_headers)
-    response = urllib.request.urlopen(req, timeout=120)
-    content_encoding = response.info().get('Content-Encoding')
-    if content_encoding == 'gzip':
-        data = gzip.GzipFile(fileobj=response).read()
-    elif content_encoding == 'deflate':
-        decompressobj = zlib.decompressobj(-zlib.MAX_WBITS)
-        data = decompressobj.decompress(response.read())+decompressobj.flush()
-    else:
-        data = response.read()
-    return data
+	ip = random.randint(1,255)
+	select = random.randint(1,2)
+	if select == 1:
+		ip = '220.181.111.' + str(ip)
+	else:
+		ip = '59.152.193.' + str(ip)
+	req_headers = {'Accept-Encoding': 'gzip, deflate', 'User-Agent': USER_AGENT, 'Client-IP': ip, 'X-Forwarded-For': ip, 'Cookie': read_cookie()[0]}
+	req = urllib.request.Request(url=url, headers=req_headers)
+	response = urllib.request.urlopen(req, timeout=120)
+	content_encoding = response.info().get('Content-Encoding')
+	if content_encoding == 'gzip':
+		data = gzip.GzipFile(fileobj=response).read()
+	elif content_encoding == 'deflate':
+		decompressobj = zlib.decompressobj(-zlib.MAX_WBITS)
+		data = decompressobj.decompress(response.read())+decompressobj.flush()
+	else:
+		data = response.read()
+	return data
 
 if __name__ == '__main__':
-    if len(sys.argv) == 1:
-        print('输入视频播放地址')
-    else:
-        media_urls = GetBilibiliUrl(sys.argv[1])
-        print(media_urls)
+	if len(sys.argv) == 1:
+		print('输入视频播放地址')
+	else:
+		url = sys.argv[1]
+		overseas=False
+		url_get_media = 'http://interface.bilibili.com/playurl?' if not overseas else 'http://interface.bilibili.com/v_cdn_play?'
+		regex_match = re.findall('http:/*[^/]+/video/av(\\d+)(/|/index.html|/index_(\\d+).html)?(\\?|#|$)',url)
+		if not regex_match:
+			print('error2')
+			exit()
+		aid = regex_match[0][0]
+		pid = regex_match[0][2] or '1'
+		try:
+			media_urls = GetBilibiliUrl(aid, pid)
+		except:
+			if r.exists(aid+','+pid):
+				media_urls = r.get(aid+','+pid).decode('utf-8', 'replace')
+			else:
+				media_urls = 'error'
+		print(media_urls)
