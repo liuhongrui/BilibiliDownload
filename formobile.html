@@ -1,4 +1,14 @@
 <script>
+var _paq = _paq || [];
+_paq.push(['trackPageView']);
+_paq.push(['enableLinkTracking']);
+(function() {
+  var u="//url.tlo.network/";
+  _paq.push(['setTrackerUrl', u+'piwik.php']);
+  _paq.push(['setSiteId', 5]);
+  var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+  g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+})();
 var params = function () {
 	var vars = [], hash;
 	var hashes = window.location.href.slice(window.location.href.indexOf('#') + 1).split('&');
@@ -16,14 +26,4 @@ if( typeof( params.page )!="undefined" ) {
 	var end = "index_" + params.page + ".html";
 }
 window.location="/video/" + id + "/" + end;
-var _paq = _paq || [];
-_paq.push(['trackPageView']);
-_paq.push(['enableLinkTracking']);
-(function() {
-  var u="//analytics.superfashi.com/";
-  _paq.push(['setTrackerUrl', u+'piwik.php']);
-  _paq.push(['setSiteId', 3]);
-  var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-  g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
-})();
 </script>
