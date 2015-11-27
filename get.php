@@ -36,7 +36,7 @@ fwrite($myfile, $ipaddress."   ".$url."   ".$rurl[0]."\n");
 fclose($myfile);
 
 if ($callback != "") {
-    echo $callback . "($rurl[0])";
+    echo $callback . "('$rurl[0]'')";
 } else {
     if (strpos($rurl[0], "http") !== FALSE) {
         header("Location: $rurl[0]");

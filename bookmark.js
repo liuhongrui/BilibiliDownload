@@ -18,12 +18,12 @@
         url: 'http://bilibili.download/get.php?callback=?',
         data: { url: location.href },
         dataType:"jsonp",
-        success: function(data) {
+        success: function(url) {
             var filename = $(".v-title > h1").attr("title")+" ";
             filename += location.pathname.substring(7)
                 .replace(/\/|\.html/g,"").replace(/index_(\d+)/g,function(a,b){return "_p"+b});
-            console.log(data.dlink);
-            downloadURL(data.dlink, filename);
+            console.log(url, filename);
+            downloadURL(url, filename);
         },
         error: function() {
             alert("有麻烦了\n o(` · ~ · ′。)o 也许是网络问题...");
