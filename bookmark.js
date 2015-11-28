@@ -15,7 +15,7 @@
 
     $.ajax({
         type: 'GET',
-        url: 'http://bilibili.download/get.php?callback=?',
+        url: 'http://dynamic.bilibili.download/get.php?callback=?',
         data: { url: location.href },
         dataType:"jsonp",
         success: function(url) {
