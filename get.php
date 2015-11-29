@@ -14,7 +14,7 @@ if (!$isBilibili) {
 // get download addr
 exec("python3 ./biliDownLoad.py http://www.bilibili.com/video/$matches[0]", $cmdRst);
 $dlink = $cmdRst[0];
-writeLog($matches[0], $flink);
+writeLog($matches[0], $dlink);
 
 // handle JSONP
 if ($callback != "") {
