@@ -14,7 +14,7 @@ if (!$isBilibili) {
 // get download addr
 exec("python3 ./biliDownLoad.py http://www.bilibili.com/video/$matches[0]", $cmdRst);
 $dlink = $cmdRst[0];
-writeLog();
+writeLog($matches[0], $flink);
 
 // handle JSONP
 if ($callback != "") {
@@ -37,7 +37,7 @@ else {
     exit;
 }
 
-function writeLog() {
+function writeLog($request, $link) {
     $myfile = fopen("debug.log", "a+");
 
     $ipaddress = '';
@@ -56,6 +56,6 @@ function writeLog() {
     else
         $ipaddress = 'UNKNOWN';
 
-    fwrite($myfile, $ipaddress."   /video/$url   $dlink\n");
+    fwrite($myfile, $ipaddress."   ".$url."   ".$link."\n");
     fclose($myfile);
 }
