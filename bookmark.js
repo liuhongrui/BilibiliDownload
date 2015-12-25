@@ -18,7 +18,7 @@
         bd_fi = !1;
         $.ajax({
             type: 'GET',
-            url: 'http://dynamic.bilibili.download/get.php?callback=?',
+            url: 'http://dynamic.bilibili.download:82/get.php?callback=?',
             data: { url: location.origin+location.pathname }, // no hash
             dataType:"jsonp",
             success: function(url) {

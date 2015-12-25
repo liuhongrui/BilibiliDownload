@@ -11,13 +11,11 @@ import urllib.request
 import xml.dom.minidom
 import zlib
 import random
-import redis
 
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.99 Safari/537.36'
 APPKEY = '85eb6835b0a1034e'
 APPSEC = '2ad42749773c441109bdc0191257a664'
 APPKEY2 = '95acd7f6cc3392f3'
-r = redis.Redis(host='xxx', port=xxx, db=0, password='xxx')
 
 def read_cookie():
 	cookiepath = './bilicookies'
@@ -37,14 +35,10 @@ def GetBilibiliUrl(aid, pid):
 	resp_media = dict(json.loads(resp_media.decode('utf-8', 'replace')))
 	result = resp_media.get('result')
 	if result == 'error':
-		if r.exists(aid+','+pid):
-			return r.get(aid+','+pid).decode('utf-8', 'replace')
-		else:
-			return 'error'
+		return 'error'
 	media_urls = resp_media.get('durl')
 	media_urls = media_urls[0]
 	media_urls = media_urls.get('url')
-	r.set(aid+','+pid, media_urls)
 	return media_urls
 
 def GetSign(params,appkey,AppSecret=None):
@@ -107,8 +101,5 @@ if __name__ == '__main__':
 		try:
 			media_urls = GetBilibiliUrl(aid, pid)
 		except:
-			if r.exists(aid+','+pid):
-				media_urls = r.get(aid+','+pid).decode('utf-8', 'replace')
-			else:
-				media_urls = 'error'
+			media_urls = 'error'
 		print(media_urls)
