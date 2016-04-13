@@ -1,97 +1,54 @@
-#!/usr/bin/env python3
-#Modified by SuperFashi
-
-import sys
-import gzip
-import json
-import hashlib
-import re
-import urllib.parse
-import urllib.request
-import xml.dom.minidom
-import zlib
+# -*- coding: utf-8 -*-
+# Created by SuperFashi
+import requests
 import random
+import os
+import sys
+import re
 
-USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.99 Safari/537.36'
-APPKEY = '85eb6835b0a1034e'
-APPSEC = '2ad42749773c441109bdc0191257a664'
-APPKEY2 = '95acd7f6cc3392f3'
+APPKEY = {!!!'''APPKEY HERE'''!!!}
 
-def read_cookie():
-	cookiepath = './bilicookies'
+def read_cookie(cookiepath):
 	cookies_file = open(cookiepath, 'r')
 	cookies = cookies_file.readlines()
 	cookies_file.close()
-	return cookies
+	ret = cookies[0].strip('\n').strip('\r')
+	return ret
 
-def GetBilibiliUrl(aid, pid):
-	cid_args = {'type': 'json', 'id': aid, 'page': pid}
-	resp_cid = urlfetch('http://api.bilibili.com/view?'+GetSign(cid_args,APPKEY,APPSEC))
-	resp_cid = dict(json.loads(resp_cid.decode('utf-8', 'replace')))
-	cid = resp_cid.get('cid')
-	APPKEYF = random.choice([APPKEY, APPKEY2])
-	media_args = {'otype': 'json', 'cid': cid, 'type': 'flv', 'quality': 4, 'appkey': APPKEYF}
-	resp_media = urlfetch(url_get_media+ChangeFuck(media_args))
-	resp_media = dict(json.loads(resp_media.decode('utf-8', 'replace')))
-	result = resp_media.get('result')
-	if result == 'error':
-		return 'error'
-	media_urls = resp_media.get('durl')
-	media_urls = media_urls[0]
-	media_urls = media_urls.get('url')
-	return media_urls
-
-def GetSign(params,appkey,AppSecret=None):
-	params['appkey']=appkey;
-	data = "";
-	paras = sorted(params)
-	paras.sort();
-	for para in paras:
-		if data != "":
-			data += "&";
-		data += para + "=" + str(params[para]);
-	if AppSecret == None:
-		return data
-	m = hashlib.md5()
-	m.update((data+AppSecret).encode('utf-8'))
-	return data+'&sign='+m.hexdigest()
-
-def ChangeFuck(params):
-	data = "";
-	paras = params;
-	for para in paras:
-		if data != "":
-			data += "&";
-		data += para + "=" + str(params[para]);
-	return data
-
-def urlfetch(url):
+def fake_header():
 	ip = random.randint(1,255)
 	select = random.randint(1,2)
 	if select == 1:
 		ip = '220.181.111.' + str(ip)
 	else:
 		ip = '59.152.193.' + str(ip)
-	req_headers = {'Accept-Encoding': 'gzip, deflate', 'User-Agent': USER_AGENT, 'Client-IP': ip, 'X-Forwarded-For': ip, 'Cookie': read_cookie()[0]}
-	req = urllib.request.Request(url=url, headers=req_headers)
-	response = urllib.request.urlopen(req, timeout=120)
-	content_encoding = response.info().get('Content-Encoding')
-	if content_encoding == 'gzip':
-		data = gzip.GzipFile(fileobj=response).read()
-	elif content_encoding == 'deflate':
-		decompressobj = zlib.decompressobj(-zlib.MAX_WBITS)
-		data = decompressobj.decompress(response.read())+decompressobj.flush()
-	else:
-		data = response.read()
-	return data
+	fake = {
+		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36',
+		'Client-IP': ip,
+		'X-Forwarded-For': ip
+	}
+	if os.path.exists('./bilicookies'):
+		fake['Cookie'] = read_cookie('./bilicookies')
+	return fake
+
+def getURL(aid, pid):
+	global APPKEY
+	cid_args = {'type': 'json', 'id': aid, 'page': pid, 'appkey': APPKEY}
+	ret_cid = requests.get('https://api.bilibili.com/view', params = cid_args, headers = fake_header())
+	cid = ret_cid.json()['cid']
+	media_args = {'otype': 'json', 'cid': cid, 'type': 'flv', 'quality': 4, 'appkey': APPKEY}
+	ret_media = requests.get('http://interface.bilibili.com/playurl', params = media_args, headers = fake_header())
+	response = ret_media.json()
+	result = response['result']
+	if result == 'error':
+		return [{'url': 'error'}]
+	return response['durl']
 
 if __name__ == '__main__':
 	if len(sys.argv) == 1:
 		print('输入视频播放地址')
 	else:
 		url = sys.argv[1]
-		overseas=False
-		url_get_media = 'http://interface.bilibili.com/playurl?' if not overseas else 'http://interface.bilibili.com/v_cdn_play?'
 		regex_match = re.findall('http:/*[^/]+/video/av(\\d+)(/|/index.html|/index_(\\d+).html)?(\\?|#|$)',url)
 		if not regex_match:
 			print('error2')
@@ -99,7 +56,8 @@ if __name__ == '__main__':
 		aid = regex_match[0][0]
 		pid = regex_match[0][2] or '1'
 		try:
-			media_urls = GetBilibiliUrl(aid, pid)
-		except:
-			media_urls = 'error'
-		print(media_urls)
+			media_urls = getURL(aid, pid)
+		except Exception as e:
+			media_urls = [{'url': 'error'}]
+		for parts in media_urls:
+			print(parts['url'])
